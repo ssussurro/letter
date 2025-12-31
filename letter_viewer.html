@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사랑하는 그대에게</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nanum Gothic', sans-serif;
+            background: linear-gradient(135deg, #f5e6d3 0%, #e8d5c4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* 편지봉투 */
+        .envelope-container {
+            position: relative;
+            cursor: pointer;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .envelope {
+            width: 280px;
+            height: 180px;
+            background: #6b9080;
+            position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s;
+        }
+
+        .envelope:hover {
+            transform: scale(1.05);
+        }
+
+        .envelope-flap {
+            width: 0;
+            height: 0;
+            border-left: 140px solid transparent;
+            border-right: 140px solid transparent;
+            border-top: 90px solid #5a7f6f;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: top center;
+            transition: transform 0.6s;
+        }
+
+        .envelope.open .envelope-flap {
+            transform: rotateX(180deg);
+        }
+
+        .envelope-body {
+            width: 100%;
+            height: 100%;
+            background: #6b9080;
+        }
+
+        .letter-peek {
+            width: 240px;
+            height: 140px;
+            background: #f5f0e8;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            border: 3px solid #6b9080;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #6b9080;
+            font-weight: bold;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .tap-hint {
+            position: absolute;
+            bottom: -50px;
+            width: 100%;
+            text-align: center;
+            color: #6b9080;
+            font-size: 14px;
+            animation: fadeInOut 2s infinite;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* 편지 뷰어 */
+        .letter-viewer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .letter-viewer.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 1;
+        }
+
+        .letter-content {
+            max-width: 90vw;
+            max-height: 90vh;
+            position: relative;
+        }
+
+        .letter-image {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(255,255,255,0.3);
+            display: none;
+        }
+
+        .letter-image.active {
+            display: block;
+            animation: slideIn 0.5s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .nav-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(107, 144, 128, 0.8);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .nav-button:hover {
+            background: rgba(107, 144, 128, 1);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .nav-button.prev {
+            left: 20px;
+        }
+
+        .nav-button.next {
+            right: 20px;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(107, 144, 128, 0.8);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .close-button:hover {
+            background: rgba(107, 144, 128, 1);
+            transform: rotate(90deg);
+        }
+
+        .page-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .page-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            transition: all 0.3s;
+        }
+
+        .page-dot.active {
+            background: #6b9080;
+            transform: scale(1.3);
+        }
+
+        /* 모바일 최적화 */
+        @media (max-width: 768px) {
+            .envelope {
+                width: 240px;
+                height: 150px;
+            }
+
+            .envelope-flap {
+                border-left: 120px solid transparent;
+                border-right: 120px solid transparent;
+                border-top: 75px solid #5a7f6f;
+            }
+
+            .letter-peek {
+                width: 200px;
+                height: 110px;
+                font-size: 16px;
+            }
+
+            .nav-button {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+
+            .nav-button.prev {
+                left: 10px;
+            }
+
+            .nav-button.next {
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 편지봉투 -->
+    <div class="envelope-container" id="envelope-container">
+        <div class="envelope" id="envelope">
+            <div class="envelope-flap"></div>
+            <div class="envelope-body">
+                <div class="letter-peek">마음의 편지(아님)</div>
+            </div>
+        </div>
+        <div class="tap-hint">탭하여 열기</div>
+    </div>
+
+    <!-- 편지 뷰어 -->
+    <div class="letter-viewer" id="letter-viewer">
+        <button class="close-button" id="close-btn">×</button>
+        <div class="letter-content">
+            <img src="letter1.png" class="letter-image active" alt="편지 1페이지">
+            <img src="letter2.png" class="letter-image" alt="편지 2페이지">
+            <img src="letter3.png" class="letter-image" alt="편지 3페이지">
+            <img src="letter4.png" class="letter-image" alt="편지 4페이지">
+            
+            <button class="nav-button prev" id="prev-btn">‹</button>
+            <button class="nav-button next" id="next-btn">›</button>
+            
+            <div class="page-indicator">
+                <div class="page-dot active"></div>
+                <div class="page-dot"></div>
+                <div class="page-dot"></div>
+                <div class="page-dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        const totalPages = 4;
+        const images = document.querySelectorAll('.letter-image');
+        const dots = document.querySelectorAll('.page-dot');
+
+        // 편지봉투 열기
+        document.getElementById('envelope-container').addEventListener('click', function() {
+            document.getElementById('envelope').classList.add('open');
+            setTimeout(() => {
+                document.getElementById('letter-viewer').classList.add('active');
+            }, 600);
+        });
+
+        // 편지 닫기
+        document.getElementById('close-btn').addEventListener('click', function() {
+            document.getElementById('letter-viewer').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('envelope').classList.remove('open');
+            }, 500);
+        });
+
+        // 다음 페이지
+        document.getElementById('next-btn').addEventListener('click', function() {
+            if (currentPage < totalPages - 1) {
+                changePage(currentPage + 1);
+            }
+        });
+
+        // 이전 페이지
+        document.getElementById('prev-btn').addEventListener('click', function() {
+            if (currentPage > 0) {
+                changePage(currentPage - 1);
+            }
+        });
+
+        // 페이지 변경
+        function changePage(newPage) {
+            images[currentPage].classList.remove('active');
+            dots[currentPage].classList.remove('active');
+            currentPage = newPage;
+            images[currentPage].classList.add('active');
+            dots[currentPage].classList.add('active');
+        }
+
+        // 터치 스와이프 지원
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.getElementById('letter-viewer').addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.getElementById('letter-viewer').addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50 && currentPage < totalPages - 1) {
+                changePage(currentPage + 1);
+            }
+            if (touchEndX > touchStartX + 50 && currentPage > 0) {
+                changePage(currentPage - 1);
+            }
+        }
+
+        // 키보드 화살표 지원
+        document.addEventListener('keydown', function(e) {
+            if (document.getElementById('letter-viewer').classList.contains('active')) {
+                if (e.key === 'ArrowRight' && currentPage < totalPages - 1) {
+                    changePage(currentPage + 1);
+                }
+                if (e.key === 'ArrowLeft' && currentPage > 0) {
+                    changePage(currentPage - 1);
+                }
+                if (e.key === 'Escape') {
+                    document.getElementById('close-btn').click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
